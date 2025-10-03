@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+        /* Blue theme */
+        body { background: #eaf4ff; font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .calculator { background: #ffffff; padding: 2rem; border-radius: 12px; box-shadow: 0 6px 24px rgba(14,50,101,0.08); width: 340px; }
+        .display { width: 100%; height: 56px; font-size: 1.5rem; margin-bottom: 1rem; text-align: right; padding: 0.5rem 0.75rem; border: 1px solid #dbeeff; border-radius: 8px; background: #eef8ff; color: #062244; }
+        .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; }
+        button { padding: 0.9rem; font-size: 1.15rem; border: none; border-radius: 8px; background: #e6f2ff; cursor: pointer; transition: background 0.15s ease, transform 0.08s ease; color: #063663; }
+        button:active { transform: translateY(1px); }
+        button:hover { background: #d2eaff; }
+        .operator { background: #cfe7ff; }
+        .operator:hover { background: #b6ddff; }
+        .equals { grid-column: span 2; background: #1e40af; color: #fff; font-weight: 600; }
+        .equals:hover { background: #17359a; }
+        .clear { background: #60a5fa; color: #fff; }
+        .clear:hover { background: #2b6cb0; }
+        @media (max-width: 420px) {
+            .calculator { width: 92vw; padding: 1.25rem; }
+            .display { height: 48px; font-size: 1.25rem; }
+            button { padding: 0.75rem; font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="calculator">
+    <input type="text" class="display" id="display" readonly />
+    <div class="buttons">
+        <button onclick="press('7')">7</button>
+        <button onclick="press('8')">8</button>
+        <button onclick="press('9')">9</button>
+        <button onclick="setOp('divide')">÷</button>
+        <button onclick="press('4')">4</button>
+        <button onclick="press('5')">5</button>
+        <button onclick="press('6')">6</button>
+        <button onclick="setOp('multiply')">×</button>
+        <button onclick="press('1')">1</button>
+        <button onclick="press('2')">2</button>
+        <button onclick="press('3')">3</button>
+        <button onclick="setOp('subtract')">−</button>
+        <button onclick="press('0')">0</button>
+        <button onclick="press('.')">.</button>
+        <button class="clear" onclick="clearDisplay()">C</button>
+        <button onclick="setOp('add')">+</button>
+        <button class="equals" onclick="calculate()">=</button>
+    </div>
+</div>
+<script>
+    let a = '';
+    let b = '';
+    let op = '';
+    let waitingForB = false;
+    const display = document.getElementById('display');
+
+    function press(num) {
+        if (!waitingForB) {
+            a += num;
+            display.value = a;
+        } else {
+            b += num;
+            display.value = b;
+        }
+    }
+    function setOp(operation) {
+        if (a === '') return;
+        op = operation;
+        waitingForB = true;
+        display.value = '';
+    }
+    function clearDisplay() {
+        a = '';
+        b = '';
+        op = '';
+        waitingForB = false;
+        display.value = '';
+    }
+    async function calculate() {
+        if (a === '' || b === '' || op === '') return;
+        const payload = { operation: op, a: parseFloat(a), b: parseFloat(b) };
+        display.value = '...';
+        try {
+            const res = await fetch('/api/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            display.value = data.result;
+            a = data.result;
+            b = '';
+            op = '';
+            waitingForB = false;
+        } catch (e) {
+            display.value = 'Error';
+        }
+    }
+</script>
+</body>
+</html>
